@@ -10,6 +10,24 @@ public class KotlinToJavaInterpreter {
             line = line.trim();
             if (line.isEmpty()) continue;
         }
+        if (line.startsWith("import")) {
+                handleImport(line);
+            } else if (line.startsWith("fun")) {
+                handleFunctionDefinition(line);
+            } else if (line.startsWith("var") || line.startsWith("val")) {
+                handleVariableDeclaration(line);
+            } else if (line.startsWith("for")) {
+                handleForLoop(line);
+            } else if (line.startsWith("println")) {
+                handlePrint(line);
+            } else if (line.contains("readLine")) {
+                handleInput(line);
+            } else {
+                handleDefault(line);
+            }
+        }
+        closeOpenBlocks();
+        return javaCode.toString();
     }
 
   private static void handleImport(String line) {
@@ -153,6 +171,23 @@ public class KotlinToJavaInterpreter {
             if (codePart.endsWith("{")) {
                 increaseBraceCount();
             }
+        }
+    }
+
+    private static void increaseBraceCount() {
+        openBraces++;
+    }
+
+    private static void decreaseBraceCount() {
+        if (openBraces > 0) {
+            openBraces--;
+        }
+    }
+
+    private static void closeOpenBlocks() {
+        while (openBraces > 0) {
+            javaCode.append("}\n");
+            decreaseBraceCount();
         }
     }
 }
