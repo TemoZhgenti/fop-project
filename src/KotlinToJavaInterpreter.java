@@ -64,3 +64,43 @@ public class KotlinToJavaInterpreter {
                 .append("(").append(params).append(") {\n");
         increaseBraceCount();
     }
+
+     private static void handleVariableDeclaration(String line) {
+        String varType = line.startsWith("val") ? "final " : "";
+        line = line.replace("val", "").replace("var", "").trim();
+        String[] parts = line.split("=");
+        String name = parts[0].trim();
+        String value = parts.length > 1 ? parts[1].trim() : "";
+
+        String type = "int"; // Default type
+        if (value.matches("\".*\"")) {
+            type = "String";
+        } else if (value.matches("true|false")) {
+            type = "boolean";
+        }
+
+        if (value.contains("readLine")) {
+            value = "Integer.parseInt(scanner.nextLine())";
+        } else if (value.contains(" ?: ")) {
+            String[] coalesceParts = value.split("\\?:");
+            value = coalesceParts[0].trim() + " != null ? " + coalesceParts[0].trim() + " : " + coalesceParts[1].trim();
+        }
+
+        javaCode.append(varType).append(type).append(" ").append(name).append(" = ").append(value).append(";\n");
+    }
+
+    private static void handleForLoop(String line) {
+        if (line.contains("..")) {
+            line = line.replace("for (", "for (int ")
+                    .replace("in ", "= ")
+                    .replace("..", "; i <= ")
+                    .replace(") {", "; i++) {");
+        } else if (line.contains("downTo")) {
+            line = line.replace("for (", "for (int ")
+                    .replace("in ", "= ")
+                    .replace("downTo", "; i >= ")
+                    .replace(") {", "; i--) {");
+        }
+        javaCode.append(line).append("\n");
+        increaseBraceCount();
+    }
