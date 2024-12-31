@@ -104,3 +104,54 @@ public class KotlinToJavaInterpreter {
         javaCode.append(line).append("\n");
         increaseBraceCount();
     }
+
+    private static void handlePrint(String line) {
+        line = line.replace("println(", "System.out.println(");
+        while (line.contains("$")) {
+            if (line.contains("{")) {
+                line = line.replaceFirst("\\$\\{", "\" + (").replaceFirst("\\}", ") + \"");
+            } else {
+                line = line.replaceFirst("\\$", "\" + ").replaceFirst(" ", " + \"");
+            }
+        }
+        line = line.replace(")", ");");
+        javaCode.append(line).append("\n");
+    }
+
+    private static void handleInput(String line) {
+        if (!javaCode.toString().contains("Scanner scanner")) {
+            javaCode.append("Scanner scanner = new Scanner(System.in);\n");
+        }
+    }
+
+    private static void handleDefault(String line) {
+        // Handle closing braces
+        if (line.equals("}")) {
+            javaCode.append(line).append("\n");
+            decreaseBraceCount();
+        } else {
+            // Split the line into code and comment parts
+            String[] parts = line.split("//", 2);
+            String codePart = parts[0].trim();
+            String commentPart = parts.length > 1 ? "// " + parts[1].trim() : "";
+
+            // Add a semicolon if needed
+            if (!codePart.isEmpty() && !codePart.endsWith("{") && !codePart.endsWith("}") && !codePart.endsWith(";")) {
+                codePart += ";";
+            }
+
+            // Append the code and comment parts
+            if (!codePart.isEmpty()) {
+                javaCode.append(codePart);
+            }
+            if (!commentPart.isEmpty()) {
+                javaCode.append(" ").append(commentPart);
+            }
+            javaCode.append("\n");
+
+            // Track opening braces
+            if (codePart.endsWith("{")) {
+                increaseBraceCount();
+            }
+        }
+    }
